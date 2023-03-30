@@ -21,6 +21,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.chat.Chat;
@@ -53,6 +55,9 @@ import net.milkbowl.vault.permission.plugins.Permission_bPermissions;
 import net.milkbowl.vault.permission.plugins.Permission_bPermissions2;
 import net.milkbowl.vault.permission.plugins.Permission_TotalPermissions;
 import net.milkbowl.vault.permission.plugins.Permission_rscPermissions;
+
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+
 import net.milkbowl.vault.permission.plugins.Permission_KPerms;
 
 import org.bstats.bukkit.Metrics;
@@ -94,7 +99,7 @@ public class Vault extends JavaPlugin {
     public void onDisable() {
         // Remove all Service Registrations
         getServer().getServicesManager().unregisterAll(this);
-        Bukkit.getScheduler().cancelTasks(this);
+        Bukkit.getGlobalRegionScheduler().cancelTasks(this);
     }
 
     @Override
@@ -117,10 +122,10 @@ public class Vault extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new VaultListener(), this);
         // Schedule to check the version every 30 minutes for an update. This is to update the most recent 
         // version so if an admin reconnects they will be warned about newer versions.
-        this.getServer().getScheduler().runTask(this, new Runnable() {
+        this.getServer().getGlobalRegionScheduler().run(this, new Consumer<ScheduledTask>() {
 
             @Override
-            public void run() {
+            public void accept(ScheduledTask task) {
                 // Programmatically set the default permission value cause Bukkit doesn't handle plugin.yml properly for Load order STARTUP plugins
                 org.bukkit.permissions.Permission perm = getServer().getPluginManager().getPermission("vault.update");
                 if (perm == null)
@@ -131,13 +136,13 @@ public class Vault extends JavaPlugin {
                 }
                 perm.setDescription("Allows a user or the console to check for vault updates");
 
-                getServer().getScheduler().runTaskTimerAsynchronously(plugin, new Runnable() {
+                Vault.this.getServer().getAsyncScheduler().runAtFixedRate(plugin, new Consumer<ScheduledTask> () {
 
                     @Override
-                    public void run() {
+                    public void accept(ScheduledTask task) {
                         if (getServer().getConsoleSender().hasPermission("vault.update") && getConfig().getBoolean("update-check", true)) {
                             try {
-                            	log.info("Checking for Updates ... ");
+                                log.info("Checking for Updates ... ");
                                 newVersion = updateCheck(currentVersion);
                                 if (newVersion > currentVersion) {
                                     log.warning("Stable Version: " + newVersionTitle + " is out!" + " You are still running version: " + currentVersionTitle);
@@ -150,8 +155,7 @@ public class Vault extends JavaPlugin {
                             }
                         }
                     }
-                }, 0, 432000);
-
+                }, 0L, 6, TimeUnit.HOURS);
             }
         });
 

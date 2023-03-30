@@ -1,4 +1,7 @@
-# Vault - Abstraction Library for Bukkit - [![Build Status](https://app.travis-ci.com/MilkBowl/Vault.svg?branch=master)](https://app.travis-ci.com/MilkBowl/Vault)
+# Vault - Abstraction Library for Bukkit
+
+**This fork is only made to run on Folia and nothing else.
+Usage at your own risk.**
 
 ## For Developers:
 Please see the [VaultAPI](https://www.github.com/MilkBowl/VaultAPI) page for
